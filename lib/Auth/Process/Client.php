@@ -24,7 +24,10 @@
  */
 class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_ProcessingFilter
 {
-    private $config = array();
+    // Set default configuration options
+    private $config = array(
+        'ssl_verify_peer' => true,
+    );
 
     public function __construct($config, $reserved)
     {
@@ -68,9 +71,9 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
                 return;
             }
             $t0 = round(microtime(true) * 1000); // TODO
-            $subject_ids = $state['Attributes'][$this->config['subject_attribute']];
-            foreach ($subject_ids as $subject_id) {
-                $newAttributes = $this->getAttributes($subject_id);
+            $subjectIds = $state['Attributes'][$this->config['subject_attribute']];
+            foreach ($subjectIds as $subjectId) {
+                $newAttributes = $this->getAttributes($subjectId);
                 SimpleSAML_Logger::debug("[aagocdb]"
                     ." process: newAttributes="
                     .var_export($newAttributes, true));
@@ -98,62 +101,71 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
 
     }
 
-    public function getAttributes($subject_id)
+    public function getAttributes($subjectId)
     {
+        SimpleSAML_Logger::debug('[aagocdb] getAttributes: subjectId='
+            . var_export($subjectId, true));
+
         $attributes = array();
-        SimpleSAML_Logger::debug('[aagocdb] getAttributes: subject_id='.var_export($subject_id, true));
 
-        // Set up config
-        $config = $this->config;
+        // Construct GOCDB API URL
+        $url = $this->config['api_base_path'] . '/?method=get_user&dn=' 
+            . urlencode($subjectId);
+        $data = $this->http('GET', $url);
+        if ($data->count() < 1) {
+            return $attributes;
+        } 
+        if (!empty($data->{'meta'}->{'count'})) {
+            SimpleSAML_Logger::debug('[aagocdb] meta count='.var_export($data->{'meta'}->{'count'}, true));
+            SimpleSAML_Logger::debug('[aagocdb] meta max_page_size='.var_export($data->{'meta'}->{'max_page'}, true));
+        }
+        $attributes[$this->config['role_attribute']] = array();
+        foreach($data->{'EGEE_USER'}->{'USER_ROLE'} as $user_role) {
+            $value = $this->config['role_urn_namespace']
+                . ':' . urlencode($user_role->{'PRIMARY_KEY'})
+                . ':' . urlencode($user_role->{'ON_ENTITY'})
+                . ':' . urlencode($user_role->{'USER_ROLE'});
+            if (isset($this->config['role_scope'])) {
+                $value .= '@' . $this->config['role_scope'];
+            }
+            $attributes[$this->config['role_attribute']][] = $value;
+        }
+        return $attributes;
+    }
 
-        // Setup cURL
-        $url = $this->config['api_base_path'].'/?method=get_user&dn=' 
-            . urlencode($subject_id);
-        SimpleSAML_Logger::debug('[aagocdb] getAttributes: url='.var_export($url, true));
+    private function http($method, $url)
+    {
+        SimpleSAML_Logger::debug("[aagocdb] http: method="
+            . var_export($method, true) . ", url=" . var_export($url, true));
         $ch = curl_init($url);
         curl_setopt_array(
             $ch,
             array(
-                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_CUSTOMREQUEST => $method,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_SSL_VERIFYPEER => true,
-                CURLOPT_SSLCERT => \SimpleSAML\Utils\Config::getCertPath($this->config['ssl_client_cert']),
+                CURLOPT_SSL_VERIFYPEER => $this->config['ssl_verify_peer'],
                 CURLOPT_CONNECTTIMEOUT => 8,
             )
         );
+        if (!empty($this->config['ssl_client_cert'])) {
+            curl_setopt($ch, CURLOPT_SSLCERT, 
+                \SimpleSAML\Utils\Config::getCertPath($this->config['ssl_client_cert']));
+        }
 
         // Send the request
         $response = curl_exec($ch);
         $http_response = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         // Check for error; not even redirects are allowed here
-        if ($http_response == 507) {
-            throw new SimpleSAML_Error_Exception("Out of resources: " . $response);
-        } elseif ($response === false || !($http_response >= 200 && $http_response < 300)) {
-            SimpleSAML_Logger::error('[aagocdb] API query failed: HTTP response code: '.$http_response.', curl error: "'.curl_error($ch)).'"';
-            SimpleSAML_Logger::debug('[aagocdb] API query failed: curl info: '.var_export(curl_getinfo($ch), 1));
-            SimpleSAML_Logger::debug('[aagocdb] API query failed: HTTP response: '.var_export($response, 1));
-            throw new SimpleSAML_Error_Exception("Error at REST API response: ". $response . $http_response);
-        } else {
-            $data = new SimpleXMLElement($response);
-            SimpleSAML_Logger::debug('[aagocdb] API query result: '.var_export($data, true));
-            if ($data->count() < 1) {
-                return $attributes;
-            } 
-            $attributes[$this->config['role_attribute']] = array();
-            foreach($data->{'EGEE_USER'}->{'USER_ROLE'} as $user_role) {
-                $value = $this->config['role_urn_namespace']
-                    . ':' . urlencode($user_role->{'PRIMARY_KEY'})
-                    . ':' . urlencode($user_role->{'ON_ENTITY'})
-                    . ':' . urlencode($user_role->{'USER_ROLE'});
-                if (isset($this->config['role_scope'])) {
-                    $value .= '@' . $this->config['role_scope'];
-                }
-                $attributes[$this->config['role_attribute']][] = $value;
-            }
+        if ($http_response !== 200) {
+            SimpleSAML_Logger::error("[aagocdb] API request failed: HTTP response code: "
+                . $http_response . ", error message: '" . curl_error($ch)) . "'";
+            throw new SimpleSAML_Error_Exception("API request failed");
         }
-        SimpleSAML_Logger::debug('[aagocdb] getAttributes: attributes=' . var_export($attributes, true));
-        return $attributes;
+        $data = new SimpleXMLElement($response);
+        SimpleSAML_Logger::debug("[aagocdb] http: data="
+            . var_export($data, true));
+        return $data;
     }
 
     private function showException($e)
