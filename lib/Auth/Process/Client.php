@@ -112,13 +112,13 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
         $url = $this->config['api_base_path'] . '/?method=get_user&dn=' 
             . urlencode($subjectId);
         $data = $this->http('GET', $url);
-        if ($data->count() < 1) {
+        if ($data->count() < 1 || empty($data->{'EGEE_USER'}->{'USER_ROLE'})) {
             return $attributes;
         } 
-        if (!empty($data->{'meta'}->{'count'})) {
-            SimpleSAML_Logger::debug('[aagocdb] meta count='.var_export($data->{'meta'}->{'count'}, true));
-            SimpleSAML_Logger::debug('[aagocdb] meta max_page_size='.var_export($data->{'meta'}->{'max_page'}, true));
-        }
+        // Check for pagination metadata
+        $pageMeta = $this->getPageMeta($data); 
+        SimpleSAML_Logger::debug('[aagocdb] getAttributes pageMeta='
+            .var_export($pageMeta, true));
         $attributes[$this->config['role_attribute']] = array();
         foreach($data->{'EGEE_USER'}->{'USER_ROLE'} as $user_role) {
             $value = $this->config['role_urn_namespace']
@@ -163,9 +163,33 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
             throw new SimpleSAML_Error_Exception("API request failed");
         }
         $data = new SimpleXMLElement($response);
-        SimpleSAML_Logger::debug("[aagocdb] http: data="
-            . var_export($data, true));
         return $data;
+    }
+
+    private function getPageMeta($response)
+    {
+        SimpleSAML_Logger::debug("[aagocdb] getPageMeta: response="
+            . var_export($response, true));
+        if (empty($response->{'meta'})) {
+            return array();
+        }
+        $meta = $response->{'meta'};
+        $result = array();
+        if (!empty($meta->{'count'})) {
+            $result['count'] = (int) $meta->{'count'}->__toString(); 
+        }
+        if (!empty($meta->{'max_page_size'})) {
+            $result['max_page_size'] = (int) $meta->{'max_page_size'}->__toString(); 
+        }
+        foreach($meta->{'link'} as $link) {
+            if (!empty($link->attributes()->{'rel'})
+                && (string) $link->attributes()->{'rel'} === 'next'
+                && !empty($link->attributes()->{'href'})) {
+                $result['next'] = (string) $link->attributes()->{'href'};
+                break;
+            }
+        }
+        return $result;
     }
 
     private function showException($e)
