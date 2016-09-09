@@ -112,24 +112,31 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
         $url = $this->config['api_base_path'] . '/?method=get_user&dn=' 
             . urlencode($subjectId);
         $data = $this->http('GET', $url);
-        if ($data->count() < 1 || empty($data->{'EGEE_USER'}->{'USER_ROLE'})) {
-            return $attributes;
-        } 
-        // Check for pagination metadata
-        $pageMeta = $this->getPageMeta($data); 
-        SimpleSAML_Logger::debug('[aagocdb] getAttributes pageMeta='
-            .var_export($pageMeta, true));
-        $attributes[$this->config['role_attribute']] = array();
-        foreach($data->{'EGEE_USER'}->{'USER_ROLE'} as $user_role) {
-            $value = $this->config['role_urn_namespace']
-                . ':' . urlencode($user_role->{'PRIMARY_KEY'})
-                . ':' . urlencode($user_role->{'ON_ENTITY'})
-                . ':' . urlencode($user_role->{'USER_ROLE'});
-            if (isset($this->config['role_scope'])) {
-                $value .= '@' . $this->config['role_scope'];
+        while ($data->count() >= 1 && !empty($data->{'EGEE_USER'}->{'USER_ROLE'})) {
+            if (!array_key_exists($this->config['role_attribute'], $attributes)) {
+                $attributes[$this->config['role_attribute']] = array();
             }
-            $attributes[$this->config['role_attribute']][] = $value;
-        }
+            foreach($data->{'EGEE_USER'}->{'USER_ROLE'} as $user_role) {
+                $value = $this->config['role_urn_namespace']
+                    . ':' . urlencode($user_role->{'PRIMARY_KEY'})
+                    . ':' . urlencode($user_role->{'ON_ENTITY'})
+                    . ':' . urlencode($user_role->{'USER_ROLE'});
+                if (isset($this->config['role_scope'])) {
+                    $value .= '@' . $this->config['role_scope'];
+                }
+                $attributes[$this->config['role_attribute']][] = $value;
+            }
+            // Check for pagination metadata
+            $pageMeta = $this->getPageMeta($data); 
+            SimpleSAML_Logger::debug('[aagocdb] getAttributes pageMeta='
+                .var_export($pageMeta, true));
+            if (empty($pageMeta) || $pageMeta['count'] < $pageMeta['max_page_size']) {
+                break;
+            }
+            if (!empty($pageMeta['next'])) {
+                $data = $this->http('GET', $pageMeta['next']);
+            }
+        } 
         return $attributes;
     }
 
