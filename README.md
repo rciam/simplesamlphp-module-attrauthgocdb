@@ -7,7 +7,7 @@ A SimpleSAMLphp module for retrieving attributes from the Grid Configuration Dat
 The following configuration options are available:
 
  * `api_base_path`: The base path of the GOCDB API.
- * `subject_attribute`: The name of the attribute whose value(s) will be used for querying the user's roles.
+ * `subject_attributes`: The name of one or more attributes whose value(s) will be used for querying the user's roles.
  * `role_attribute`: The name of the attribute that will contain the retrieved user's role(s).
  * `role_urn_namespace`: The namespace of the URN that will be used for generating the role attribute values.
  * `role_scope`: (Optional) When specified, the generated role attribute values will be scoped at the supplied administrative domain.
@@ -22,7 +22,9 @@ The following configuration options are available:
     '60' => array(
          'class' => 'attrauthgocdb:Client',
          'api_base_path' => 'https://gocdb.aa.org/api',
-         'subject_attribute' => 'distinguishedName',
+         'subject_attributes' => array(
+             'distinguishedName',
+         ),
          'role_attribute' => 'eduPersonEntitlement',
          'role_urn_namespace' => 'urn:mace:aa.org',
          'role_scope' => 'vo.org',
