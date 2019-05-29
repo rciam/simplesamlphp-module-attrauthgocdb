@@ -9,7 +9,7 @@ An unexpected error occurred while retrieving attributes from an external attrib
 <pre>
 
 <?php
-    echo $this->data['e'];
+echo $this->data['e'];
 ?>
 </pre>
 
