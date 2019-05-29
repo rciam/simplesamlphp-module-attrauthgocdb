@@ -1,5 +1,7 @@
 <?php
 
+namespace SimpleSAML\Module\attrauthgocdb\Auth\Process;
+
 /**
  * Authproc filter for retrieving attributes from the Grid Configuration 
  * Database (GOCDB) and adding them to the list of attributes received from the
@@ -24,7 +26,7 @@
  *
  * @author Nicolas Liampotis <nliam@grnet.gr>
  */
-class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_ProcessingFilter
+class Client extends \SimpleSAML\Auth\ProcessingFilter
 {
     // Set default configuration options
     private $config = array(
