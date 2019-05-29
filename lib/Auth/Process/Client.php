@@ -2,6 +2,12 @@
 
 namespace SimpleSAML\Module\attrauthgocdb\Auth\Process;
 
+use \SimpleSAML\Configuration;
+use \SimpleSAML\Error\Exception;
+use \SimpleSAML\Logger;
+use \SimpleSAML\Utils\Config;
+use \SimpleSAML\XHTML\Template;
+
 /**
  * Authproc filter for retrieving attributes from the Grid Configuration 
  * Database (GOCDB) and adding them to the list of attributes received from the
@@ -44,7 +50,7 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
         );
         foreach ($params as $param) {
             if (!array_key_exists($param, $config)) {
-                throw new SimpleSAML_Error_Exception(
+                throw new Exception(
                     'Missing required configuration parameter: ' .$param);
             }
             $this->config[$param] = $config[$param];
@@ -73,7 +79,7 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
                 }
             }
             if (empty($subjectIds)) {
-                SimpleSAML_Logger::debug("[attrauthgocdb]"
+                Logger::debug("[attrauthgocdb]"
                     ." Skipping query to GOCDB AA at "
                     .$this->config['api_base_path']
                     .": No attribute(s) named '"
@@ -84,7 +90,7 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
             $t0 = round(microtime(true) * 1000); // TODO
             foreach ($subjectIds as $subjectId) {
                 $newAttributes = $this->getAttributes($subjectId);
-                SimpleSAML_Logger::debug("[attrauthgocdb]"
+                Logger::debug("[attrauthgocdb]"
                     ." process: newAttributes="
                     .var_export($newAttributes, true));
                 foreach($newAttributes as $key => $value) {
@@ -103,7 +109,7 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
                 }
             }
             $t1 = round(microtime(true) * 1000); // TODO 
-            SimpleSAML_Logger::debug(
+            Logger::debug(
                 "[attrauthgocdb] process: dt=" . var_export($t1-$t0, true) . "msec");
         } catch (\Exception $e) {
             $this->showException($e);
@@ -113,7 +119,7 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
 
     public function getAttributes($subjectId)
     {
-        SimpleSAML_Logger::debug('[attrauthgocdb] getAttributes: subjectId='
+        Logger::debug('[attrauthgocdb] getAttributes: subjectId='
             . var_export($subjectId, true));
 
         $attributes = array();
@@ -138,7 +144,7 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
             }
             // Check for pagination metadata
             $pageMeta = $this->getPageMeta($data); 
-            SimpleSAML_Logger::debug('[attrauthgocdb] getAttributes pageMeta='
+            Logger::debug('[attrauthgocdb] getAttributes pageMeta='
                 .var_export($pageMeta, true));
             if (empty($pageMeta) || $pageMeta['count'] < $pageMeta['max_page_size']) {
                 break;
@@ -152,7 +158,7 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
 
     private function http($method, $url)
     {
-        SimpleSAML_Logger::debug("[attrauthgocdb] http: method="
+        Logger::debug("[attrauthgocdb] http: method="
             . var_export($method, true) . ", url=" . var_export($url, true));
         $ch = curl_init($url);
         curl_setopt_array(
@@ -166,7 +172,7 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
         );
         if (!empty($this->config['ssl_client_cert'])) {
             curl_setopt($ch, CURLOPT_SSLCERT, 
-                \SimpleSAML\Utils\Config::getCertPath($this->config['ssl_client_cert']));
+                Config::getCertPath($this->config['ssl_client_cert']));
         }
 
         // Send the request
@@ -175,9 +181,9 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
 
         // Check for error; not even redirects are allowed here
         if ($http_response !== 200) {
-            SimpleSAML_Logger::error("[attrauthgocdb] API request failed: HTTP response code: "
+            Logger::error("[attrauthgocdb] API request failed: HTTP response code: "
                 . $http_response . ", error message: '" . curl_error($ch)) . "'";
-            throw new SimpleSAML_Error_Exception("API request failed");
+            throw new Exception("API request failed");
         }
         $data = new SimpleXMLElement($response);
         return $data;
@@ -185,7 +191,7 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
 
     private function getPageMeta($response)
     {
-        SimpleSAML_Logger::debug("[attrauthgocdb] getPageMeta: response="
+        Logger::debug("[attrauthgocdb] getPageMeta: response="
             . var_export($response, true));
         if (empty($response->{'meta'})) {
             return array();
@@ -211,8 +217,8 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
 
     private function showException($e)
     {
-        $globalConfig = SimpleSAML_Configuration::getInstance();
-        $t = new SimpleSAML_XHTML_Template($globalConfig, 'attrauthgocdb:exception.tpl.php');
+        $globalConfig = Configuration::getInstance();
+        $t = new Template($globalConfig, 'attrauthgocdb:exception.tpl.php');
         $t->data['e'] = $e->getMessage();
         $t->show();
         exit();
