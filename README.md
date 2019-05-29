@@ -17,20 +17,20 @@ The following configuration options are available:
 ### Example configuration
 
 ```
-'authproc' => array(
+'authproc' => [
     ...
-    '60' => array(
+    '60' => [
          'class' => 'attrauthgocdb:Client',
          'api_base_path' => 'https://gocdb.aa.org/api',
-         'subject_attributes' => array(
+         'subject_attributes' => [
              'distinguishedName',
-         ),
+         ],
          'role_attribute' => 'eduPersonEntitlement',
          'role_urn_namespace' => 'urn:mace:aa.org',
          'role_scope' => 'vo.org',
          'ssl_client_cert' => 'client_example_org.chained.pem',
          'ssl_verify_peer' => true,
-    ),
+    ],
 ```
 
 # License
