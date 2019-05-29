@@ -56,14 +56,14 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
             }
             $this->config[$param] = $config[$param];
         }
-        $optional_params = array(
+        $optionalParams = array(
             'role_scope',
             'ssl_client_cert',
             'ssl_verify_peer',
         );
-        foreach ($optional_params as $optional_param) {
-            if (array_key_exists($optional_param, $config)) {
-                $this->config[$optional_param] = $config[$optional_param];
+        foreach ($optionalParams as $optionalParam) {
+            if (array_key_exists($optionalParam, $config)) {
+                $this->config[$optionalParam] = $config[$optionalParam];
             }
         }
     }
@@ -135,11 +135,11 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
             if (!array_key_exists($this->config['role_attribute'], $attributes)) {
                 $attributes[$this->config['role_attribute']] = array();
             }
-            foreach ($data->{'EGEE_USER'}->{'USER_ROLE'} as $user_role) {
+            foreach ($data->{'EGEE_USER'}->{'USER_ROLE'} as $userRole) {
                 $value = $this->config['role_urn_namespace']
-                    . ':' . urlencode($user_role->{'PRIMARY_KEY'})
-                    . ':' . urlencode($user_role->{'ON_ENTITY'})
-                    . ':' . urlencode($user_role->{'USER_ROLE'});
+                    . ':' . urlencode($userRole->{'PRIMARY_KEY'})
+                    . ':' . urlencode($userRole->{'ON_ENTITY'})
+                    . ':' . urlencode($userRole->{'USER_ROLE'});
                 if (isset($this->config['role_scope'])) {
                     $value .= '@' . $this->config['role_scope'];
                 }
@@ -183,12 +183,12 @@ class Client extends \SimpleSAML\Auth\ProcessingFilter
 
         // Send the request
         $response = curl_exec($ch);
-        $http_response = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpResponse = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         // Check for error; not even redirects are allowed here
-        if ($http_response !== 200) {
+        if ($httpResponse !== 200) {
             Logger::error("[attrauthgocdb] API request failed: HTTP response code: "
-                . $http_response . ", error message: '" . curl_error($ch)) . "'";
+                . $httpResponse . ", error message: '" . curl_error($ch)) . "'";
             throw new Exception("API request failed");
         }
         $data = new SimpleXMLElement($response);
