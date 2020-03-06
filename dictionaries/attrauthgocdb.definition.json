@@ -1,0 +1,23 @@
+{
+	"yes": {
+		"en": "Continue"
+	},
+	"no": {
+		"en": "Abort"
+	},
+	"failure_text": {
+		"en": "<p>We are sorry for the inconvienience but we could <b>not retrieve</b> any data from the <b>GOCDB</b>.</p><p>Choose whether to Continue or Abort.</p><br>"
+	},
+	"error_msg_title": {
+		"en": "<b>Error Reported by the Module:</b>"
+	},
+	"no_attrauthgocdb_text": {
+		"en": "You decided to abort authentication."
+	},
+	"no_attrauthgocdb_return": {
+		"en": "Return to previous page"
+	},
+	"attrauthgocdb_privacy_policy": {
+		"en": "Privacypolicy for the service"
+	}
+}
