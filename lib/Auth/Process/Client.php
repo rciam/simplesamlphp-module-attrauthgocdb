@@ -12,6 +12,7 @@
  *       '60' => array(
  *            'class' => 'attrauthgocdb:Client',
  *            'api_base_path' => 'https://gocdb.aa.org/api',
+ *            'api_base_path.slaves' => array('https://gocdb.aa.org/slave/api'),
  *            'subject_attributes' => array(
  *                'distinguishedName',
  *            ),
@@ -51,6 +52,7 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
             'role_scope',
             'ssl_client_cert',
             'ssl_verify_peer',
+            'api_base_path.slaves',
         );
         foreach ($optional_params as $optional_param) {
             if (array_key_exists($optional_param, $config)) {
@@ -106,12 +108,18 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
             SimpleSAML_Logger::debug(
                 "[attrauthgocdb] process: dt=" . var_export($t1-$t0, true) . "msec");
         } catch (\Exception $e) {
-            // Save state and redirect
-            $state['attrauthgocdb:error_msg'] = $e->getMessage();
-            $id = SimpleSAML_Auth_State::saveState($state, 'attrauthgocdb:error_state');
-            $url = SimpleSAML_Module::getModuleURL('attrauthgocdb/user_in_form.php');
-            \SimpleSAML\Utils\HTTP::redirectTrustedURL($url, array('StateId' => $id));
-            //$this->showException($e);
+            // Try the slave urls
+            if(!empty($this->config['api_base_path.slaves'])) {
+                $this->config['api_base_path'] = array_shift($this->config['api_base_path.slaves']);
+                $this->process($state);
+            } else {
+              // Save state and redirect
+              $state['attrauthgocdb:error_msg'] = $e->getMessage();
+              $id = SimpleSAML_Auth_State::saveState($state, 'attrauthgocdb:error_state');
+              $url = SimpleSAML_Module::getModuleURL('attrauthgocdb/user_in_form.php');
+              \SimpleSAML\Utils\HTTP::redirectTrustedURL($url, array('StateId' => $id));
+              //$this->showException($e);
+            }
         }
 
     }
