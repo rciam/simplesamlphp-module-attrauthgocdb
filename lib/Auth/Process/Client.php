@@ -200,9 +200,12 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
         // Check for error; not even redirects are allowed here
         if ($http_response !== 200) {
             $response = json_decode($response, true);
+            // TODO: Add this in dictionary
+            $error_msg = "API request failed";
             if (!empty($response) && is_string($response['Error']['Message'])) {
-                SimpleSAML_Logger::error("[attrauthgocdb] API request failed: HTTP response code: " . $http_response . ", error message: '" . $response['Error']['Message']) . "'";
+                $error_msg = $response['Error']['Message'];
             }
+            SimpleSAML_Logger::error("[attrauthgocdb] API request failed: HTTP response code: " . $http_response . ", error message: '" . $error_msg) . "'";
             throw new SimpleSAML_Error_Exception("API request failed");
         }
         $data = new SimpleXMLElement($response);
