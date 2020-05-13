@@ -10,6 +10,9 @@ Icon
 # Thumbnails
 ._*
 
+# Begin IDE.gitignore
+.idea
+
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
