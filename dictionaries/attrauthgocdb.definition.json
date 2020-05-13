@@ -6,10 +6,10 @@
 		"en": "Abort"
 	},
 	"failure_text": {
-		"en": "<p>We are sorry for the inconvienience but we could <b>not retrieve</b> any data from the <b>GOCDB</b>.</p><p>Choose whether to Continue or Abort.</p><br>"
+		"en": "<p>We are sorry for the inconvienience but we could not retrieve role information from the Grid Configuration Database (GOCDB)</b>.</p><br/><p>Choose whether to <b>Abort</b> or <b>Continue accessing the service without role information from the GOCDB</b>.</p><br/>"
 	},
 	"error_msg_title": {
-		"en": "<b>Error Reported by the Module:</b>"
+		"en": "<b>This is what went wrong:</b>"
 	},
 	"no_attrauthgocdb_text": {
 		"en": "You decided to abort authentication."
@@ -18,6 +18,6 @@
 		"en": "Return to previous page"
 	},
 	"attrauthgocdb_privacy_policy": {
-		"en": "Privacypolicy for the service"
+		"en": "Privacy Policy for the service"
 	}
 }
