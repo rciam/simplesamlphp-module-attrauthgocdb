@@ -1,4 +1,5 @@
 <?php
+
 /**
  * User Inform Form
  *
@@ -7,6 +8,7 @@
  *
  * @package SimpleSAMLphp
  */
+
 /**
  * Explicit instruct attribute selection page to send no-cache header to browsers to make
  * sure the users attribute information are not store on client disk.
@@ -21,34 +23,34 @@ session_cache_limiter('nocache');
 $globalConfig = SimpleSAML\Configuration::getInstance();
 SimpleSAML\Logger::info('attrAuthGOCDB - error_state: Accessing error state interface');
 if (!array_key_exists('StateId', $_REQUEST)) {
-  throw new SimpleSAML\Error\BadRequest(
-    'Missing required StateId query parameter.'
-  );
+    throw new SimpleSAML\Error\BadRequest(
+        'Missing required StateId query parameter.'
+    );
 }
 $id = $_REQUEST['StateId'];
 $state = SimpleSAML\Auth\State::loadState($id, 'attrauthgocdb:error_state');
 
 // Get the spEntityId for the privace policy section
 if (array_key_exists('core:SP', $state)) {
-  $spEntityId = $state['core:SP'];
-} else if (array_key_exists('saml:sp:State', $state)) {
-  $spEntityId = $state['saml:sp:State']['core:SP'];
+    $spEntityId = $state['core:SP'];
+} elseif (array_key_exists('saml:sp:State', $state)) {
+    $spEntityId = $state['saml:sp:State']['core:SP'];
 } else {
-  $spEntityId = 'UNKNOWN';
+    $spEntityId = 'UNKNOWN';
 }
 
 // The user has pressed the yes-button
-if ( array_key_exists('yes', $_REQUEST) || array_key_exists('no', $_REQUEST) ) {
-  // Remove the fields that we do not want any more
-  if (array_key_exists('attrauthgocdb:error_msg', $state)) {
-    unset($state['attrauthgocdb:error_msg']);
-  }
+if (array_key_exists('yes', $_REQUEST) || array_key_exists('no', $_REQUEST)) {
+    // Remove the fields that we do not want any more
+    if (array_key_exists('attrauthgocdb:error_msg', $state)) {
+        unset($state['attrauthgocdb:error_msg']);
+    }
 }
 
 // The user has pressed the yes-button
 // The resumeProcessing function needs a ReturnUrl or a ReturnCall in order to proceed
 if (array_key_exists('yes', $_REQUEST)) {
-  SimpleSAML\Auth\ProcessingChain::resumeProcessing($state);
+    SimpleSAML\Auth\ProcessingChain::resumeProcessing($state);
 }
 
 
@@ -67,18 +69,18 @@ $t->data['logoutLink'] = SimpleSAML\Module::getModuleURL('attrauthgocdb/logout.p
 $t->data['logoutData'] = array('StateId' => $id);
 // Fetch privacypolicy
 if (array_key_exists('privacypolicy', $state['Destination'])) {
-  $privacyPolicy = $state['Destination']['privacypolicy'];
+    $privacyPolicy = $state['Destination']['privacypolicy'];
 } elseif (array_key_exists('privacypolicy', $state['Source'])) {
-  $privacyPolicy = $state['Source']['privacypolicy'];
+    $privacyPolicy = $state['Source']['privacypolicy'];
 } else {
-  $privacyPolicy = false;
+    $privacyPolicy = false;
 }
 if ($privacyPolicy !== false) {
-  $privacyPolicy = str_replace(
-    '%SPENTITYID%',
-    urlencode($spEntityId),
-    $privacyPolicy
-  );
+    $privacyPolicy = str_replace(
+        '%SPENTITYID%',
+        urlencode($spEntityId),
+        $privacyPolicy
+    );
 }
 $t->data['sppp'] = $privacyPolicy;
 $t->show();

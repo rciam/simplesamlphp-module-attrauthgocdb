@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This is the handler for logout started from the error presentation page.
  *
@@ -13,5 +14,5 @@ $state = SimpleSAML\Auth\State::loadState($_GET['StateId'], 'attrauthgocdb:error
 $state['Responder'] = array('sspmod_attrauthgocdb_Logout', 'postLogout');
 
 $idp = SimpleSAML\IdP::getByState($state);
-$idp->handleLogoutRequest($state, NULL);
+$idp->handleLogoutRequest($state, null);
 assert('FALSE');
