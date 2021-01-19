@@ -1,5 +1,7 @@
 <?php
 
+namespace SimpleSAML\Module\attrauthgocdb\Auth\Process;
+
 /**
  * Authproc filter for retrieving attributes from the Grid Configuration
  * Database (GOCDB) and adding them to the list of attributes received from the
@@ -25,7 +27,7 @@
  *
  * @author Nicolas Liampotis <nliam@grnet.gr>
  */
-class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_ProcessingFilter
+class Client extends \SimpleSAML\Auth\ProcessingFilter
 {
     // Set default configuration options
     private $config = array(
@@ -43,20 +45,20 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
         );
         foreach ($params as $param) {
             if (!array_key_exists($param, $config)) {
-                throw new SimpleSAML_Error_Exception(
+                throw new SimpleSAML\Error\Exception(
                     'Missing required configuration parameter: ' .$param);
             }
             $this->config[$param] = $config[$param];
         }
-        $optional_params = array(
+        $optionalParams = array(
             'role_scope',
             'ssl_client_cert',
             'ssl_verify_peer',
             'api_base_path.slaves',
         );
-        foreach ($optional_params as $optional_param) {
-            if (array_key_exists($optional_param, $config)) {
-                $this->config[$optional_param] = $config[$optional_param];
+        foreach ($optionalParams as $optionalParam) {
+            if (array_key_exists($optionalParam, $config)) {
+                $this->config[$optionalParam] = $config[$optionalParam];
             }
         }
     }
@@ -75,7 +77,7 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
             // INFO: Array spread operator does not support associative arrays. That's why we use array_values first
             $subjectIds = array_merge(...array_values($subjectIds));
             if (empty($subjectIds)) {
-                SimpleSAML_Logger::debug("[attrauthgocdb]"
+                SimpleSAML\Logger::debug("[attrauthgocdb]"
                     ." Skipping query to GOCDB AA at "
                     .$this->config['api_base_path']
                     .": No attribute(s) named '"
@@ -86,7 +88,7 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
             $t0 = round(microtime(true) * 1000); // TODO
             foreach ($subjectIds as $subjectId) {
                 $newAttributes = $this->getAttributes($subjectId);
-                SimpleSAML_Logger::debug("[attrauthgocdb]"
+                SimpleSAML\Logger::debug("[attrauthgocdb]"
                     ." process: newAttributes="
                     .var_export($newAttributes, true));
                 foreach($newAttributes as $key => $value) {
@@ -105,7 +107,7 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
                 }
             }
             $t1 = round(microtime(true) * 1000); // TODO
-            SimpleSAML_Logger::debug(
+            SimpleSAML\Logger::debug(
                 "[attrauthgocdb] process: dt=" . var_export($t1-$t0, true) . "msec");
         } catch (\Exception $e) {
             // Try the slave urls
@@ -115,8 +117,8 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
             } else {
               // Save state and redirect
               $state['attrauthgocdb:error_msg'] = $e->getMessage();
-              $id = SimpleSAML_Auth_State::saveState($state, 'attrauthgocdb:error_state');
-              $url = SimpleSAML_Module::getModuleURL('attrauthgocdb/user_in_form.php');
+              $id = SimpleSAML\Auth_State::saveState($state, 'attrauthgocdb:error_state');
+              $url = SimpleSAML\Module::getModuleURL('attrauthgocdb/user_in_form.php');
               \SimpleSAML\Utils\HTTP::redirectTrustedURL($url, array('StateId' => $id));
               //$this->showException($e);
             }
@@ -127,11 +129,11 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
     /**
      * @param $subjectId
      * @return array
-     * @throws SimpleSAML_Error_Exception
+     * @throws SimpleSAML\Error\Exception
      */
     public function getAttributes($subjectId)
     {
-        SimpleSAML_Logger::debug('[attrauthgocdb] getAttributes: subjectId='
+        SimpleSAML\Logger::debug('[attrauthgocdb] getAttributes: subjectId='
             . var_export($subjectId, true));
 
         $attributes = array();
@@ -144,11 +146,11 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
             if (!array_key_exists($this->config['role_attribute'], $attributes)) {
                 $attributes[$this->config['role_attribute']] = array();
             }
-            foreach($data->{'EGEE_USER'}->{'USER_ROLE'} as $user_role) {
+            foreach($data->{'EGEE_USER'}->{'USER_ROLE'} as $userRole) {
                 $value = $this->config['role_urn_namespace']
-                    . ':' . urlencode($user_role->{'PRIMARY_KEY'})
-                    . ':' . urlencode($user_role->{'ON_ENTITY'})
-                    . ':' . urlencode($user_role->{'USER_ROLE'});
+                    . ':' . urlencode($userRole->{'PRIMARY_KEY'})
+                    . ':' . urlencode($userRole->{'ON_ENTITY'})
+                    . ':' . urlencode($userRole->{'USER_ROLE'});
                 if (isset($this->config['role_scope'])) {
                     $value .= '@' . $this->config['role_scope'];
                 }
@@ -156,7 +158,7 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
             }
             // Check for pagination metadata
             $pageMeta = $this->getPageMeta($data);
-            SimpleSAML_Logger::debug('[attrauthgocdb] getAttributes pageMeta='
+            SimpleSAML\Logger::debug('[attrauthgocdb] getAttributes pageMeta='
                 .var_export($pageMeta, true));
             if (empty($pageMeta) || $pageMeta['count'] < $pageMeta['max_page_size']) {
                 break;
@@ -172,11 +174,11 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
      * @param $method
      * @param $url
      * @return array
-     * @throws SimpleSAML_Error_Exception
+     * @throws SimpleSAML\Error\Exception
      */
     private function http($method, $url)
     {
-        SimpleSAML_Logger::debug("[attrauthgocdb] http: method="
+        SimpleSAML\Logger::debug("[attrauthgocdb] http: method="
             . var_export($method, true) . ", url=" . var_export($url, true));
         $ch = curl_init($url);
         curl_setopt_array(
@@ -195,18 +197,18 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
 
         // Send the request
         $response = curl_exec($ch);
-        $http_response = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpResponse = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         // Check for error; not even redirects are allowed here
-        if ($http_response !== 200) {
+        if ($httpResponse !== 200) {
             $response = json_decode($response, true);
             // TODO: Add this in dictionary
-            $error_msg = "API request failed";
+            $errorMsg = "API request failed";
             if (!empty($response) && is_string($response['Error']['Message'])) {
-                $error_msg = $response['Error']['Message'];
+                $errorMsg = $response['Error']['Message'];
             }
-            SimpleSAML_Logger::error("[attrauthgocdb] API request failed: HTTP response code: " . $http_response . ", error message: '" . $error_msg) . "'";
-            throw new SimpleSAML_Error_Exception("API request failed");
+            SimpleSAML\Logger::error("[attrauthgocdb] API request failed: HTTP response code: " . $httpResponse . ", error message: '" . $errorMsg) . "'";
+            throw new SimpleSAML\Error\Exception("API request failed");
         }
         $data = new SimpleXMLElement($response);
         return $data;
@@ -218,7 +220,7 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
       */
     private function getPageMeta($response)
     {
-        SimpleSAML_Logger::debug("[attrauthgocdb] getPageMeta: response="
+        SimpleSAML\Logger::debug("[attrauthgocdb] getPageMeta: response="
             . var_export($response, true));
         if (empty($response->{'meta'})) {
             return array();
@@ -248,8 +250,8 @@ class sspmod_attrauthgocdb_Auth_Process_Client extends SimpleSAML_Auth_Processin
       */
     private function showException($e)
     {
-        $globalConfig = SimpleSAML_Configuration::getInstance();
-        $t = new SimpleSAML_XHTML_Template($globalConfig, 'attrauthgocdb:exception.tpl.php');
+        $globalConfig = SimpleSAML\Configuration::getInstance();
+        $t = new SimpleSAML\XHTML\Template($globalConfig, 'attrauthgocdb:exception.tpl.php');
         $t->data['e'] = $e->getMessage();
         $t->show();
         exit();
