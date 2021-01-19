@@ -19,40 +19,42 @@ use SimpleSAML\XHTML\Template;
  *
  * Example configuration:
  *
- *    'authproc' => array(
+ *    'authproc' => [
  *       ...
- *       '60' => array(
+ *       '60' => [
  *            'class' => 'attrauthgocdb:Client',
  *            'api_base_path' => 'https://gocdb.aa.org/api',
- *            'api_base_path.slaves' => array('https://gocdb.aa.org/slave/api'),
- *            'subject_attributes' => array(
+ *            'api_base_path.slaves' => [
+ *                'https://gocdb.aa.org/slave/api'
+ *            ],
+ *            'subject_attributes' => [
  *                'distinguishedName',
- *            ),
+ *            ],
  *            'role_attribute' => 'eduPersonEntitlement',
  *            'role_urn_namespace' => 'urn:mace:aa.org',
  *            'role_scope' => 'vo.org',
  *            'ssl_client_cert' => 'client_example_org.chained.pem',
  *            'ssl_verify_peer' => true,
- *       ),
+ *       ],
  *
  * @author Nicolas Liampotis <nliam@grnet.gr>
  */
 class Client extends ProcessingFilter
 {
     // Set default configuration options
-    private $config = array(
+    private $config = [
         'ssl_verify_peer' => true,
-    );
+    ];
 
     public function __construct($config, $reserved)
     {
         parent::__construct($config, $reserved);
-        $params = array(
+        $params = [
             'api_base_path',
             'subject_attributes',
             'role_attribute',
             'role_urn_namespace',
-        );
+        ];
         foreach ($params as $param) {
             if (!array_key_exists($param, $config)) {
                 throw new Exception(
@@ -61,12 +63,12 @@ class Client extends ProcessingFilter
             }
             $this->config[$param] = $config[$param];
         }
-        $optionalParams = array(
+        $optionalParams = [
             'role_scope',
             'ssl_client_cert',
             'ssl_verify_peer',
             'api_base_path.slaves',
-        );
+        ];
         foreach ($optionalParams as $optionalParam) {
             if (array_key_exists($optionalParam, $config)) {
                 $this->config[$optionalParam] = $config[$optionalParam];
@@ -109,7 +111,7 @@ class Client extends ProcessingFilter
                 }
                 if (!empty($newAttributes)) {
                     if (!isset($state['Attributes'][$this->config['role_attribute']])) {
-                        $state['Attributes'][$this->config['role_attribute']] = array();
+                        $state['Attributes'][$this->config['role_attribute']] = [];
                     }
                     $state['Attributes'][$this->config['role_attribute']] = array_merge(
                         $state['Attributes'][$this->config['role_attribute']],
@@ -131,7 +133,7 @@ class Client extends ProcessingFilter
                 $state['attrauthgocdb:error_msg'] = $e->getMessage();
                 $id = Auth_State::saveState($state, 'attrauthgocdb:error_state');
                 $url = Module::getModuleURL('attrauthgocdb/user_in_form.php');
-                HTTP::redirectTrustedURL($url, array('StateId' => $id));
+                HTTP::redirectTrustedURL($url, ['StateId' => $id]);
                 //$this->showException($e);
             }
         }
@@ -146,7 +148,7 @@ class Client extends ProcessingFilter
     {
         Logger::debug('[attrauthgocdb] getAttributes: subjectId=' . var_export($subjectId, true));
 
-        $attributes = array();
+        $attributes = [];
 
         // Construct GOCDB API URL
         $url = $this->config['api_base_path'] . '/?method=get_user&dn='
@@ -154,7 +156,7 @@ class Client extends ProcessingFilter
         $data = $this->http('GET', $url);
         while ($data->count() >= 1 && !empty($data->{'EGEE_USER'}->{'USER_ROLE'})) {
             if (!array_key_exists($this->config['role_attribute'], $attributes)) {
-                $attributes[$this->config['role_attribute']] = array();
+                $attributes[$this->config['role_attribute']] = [];
             }
             foreach ($data->{'EGEE_USER'}->{'USER_ROLE'} as $userRole) {
                 $value = $this->config['role_urn_namespace']
@@ -191,12 +193,12 @@ class Client extends ProcessingFilter
         $ch = curl_init($url);
         curl_setopt_array(
             $ch,
-            array(
+            [
                 CURLOPT_CUSTOMREQUEST => $method,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_SSL_VERIFYPEER => $this->config['ssl_verify_peer'],
                 CURLOPT_CONNECTTIMEOUT => 8,
-            )
+            ]
         );
         if (!empty($this->config['ssl_client_cert'])) {
             curl_setopt(
@@ -236,10 +238,10 @@ class Client extends ProcessingFilter
     {
         Logger::debug("[attrauthgocdb] getPageMeta: response=" . var_export($response, true));
         if (empty($response->{'meta'})) {
-            return array();
+            return [];
         }
         $meta = $response->{'meta'};
-        $result = array();
+        $result = [];
         if (!empty($meta->{'count'})) {
             $result['count'] = (int) $meta->{'count'}->__toString();
         }

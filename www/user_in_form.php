@@ -63,10 +63,10 @@ $t = new SimpleSAML\XHTML\Template($globalConfig, 'attrauthgocdb:user_in_form.tp
 $t->data['srcMetadata'] = $state['Source'];
 $t->data['dstMetadata'] = $state['Destination'];
 $t->data['yesTarget'] = SimpleSAML\Module::getModuleURL('attrauthgocdb/user_in_form.php');
-$t->data['yesData'] = array('StateId' => $id);
+$t->data['yesData'] = ['StateId' => $id];
 $t->data['error_msg'] = $state['attrauthgocdb:error_msg'];
 $t->data['logoutLink'] = SimpleSAML\Module::getModuleURL('attrauthgocdb/logout.php');
-$t->data['logoutData'] = array('StateId' => $id);
+$t->data['logoutData'] = ['StateId' => $id];
 // Fetch privacypolicy
 if (array_key_exists('privacypolicy', $state['Destination'])) {
     $privacyPolicy = $state['Destination']['privacypolicy'];

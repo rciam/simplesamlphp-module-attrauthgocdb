@@ -55,7 +55,11 @@ if (array_key_exists('error_msg', $this->data)) {
     $errorMsg = $this->data['error_msg'];
 }
 
-$this->data['jquery'] = array('core' => true, 'ui' => true, 'css' => true);
+$this->data['jquery'] = [
+  'core' => true,
+  'ui' => true,
+  'css' => true
+];
 $this->data['head'] = '<link rel="stylesheet" type="text/css" href="/' . $this->data['baseurlpath']
 . 'module.php/attrauthgocdb/resources/css/style.css" />' . "\n";
 $this->includeAtTemplateBase('includes/header.php');
