@@ -18,21 +18,23 @@ The following configuration options are available:
 ### Example configuration
 
 ```
-'authproc' => array(
+'authproc' => [
     ...
-    '60' => array(
-         'class' => 'attrauthgocdb:Client',
-         'api_base_path' => 'https://gocdb.aa.org/api',
-         'api_base_path.slaves' => array('https://gocdb.aa.org/slave/api'),
-         'subject_attributes' => array(
-             'distinguishedName',
-         ),
-         'role_attribute' => 'eduPersonEntitlement',
-         'role_urn_namespace' => 'urn:mace:aa.org',
-         'role_scope' => 'vo.org',
-         'ssl_client_cert' => 'client_example_org.chained.pem',
-         'ssl_verify_peer' => true,
-    ),
+    '60' => [
+        'class' => 'attrauthgocdb:Client',
+        'api_base_path' => 'https://gocdb.aa.org/api',
+        'api_base_path.slaves' => [
+            'https://gocdb.aa.org/slave/api'
+        ],
+        'subject_attributes' => [
+            'distinguishedName',
+        ],
+        'role_attribute' => 'eduPersonEntitlement',
+        'role_urn_namespace' => 'urn:mace:aa.org',
+        'role_scope' => 'vo.org',
+        'ssl_client_cert' => 'client_example_org.chained.pem',
+        'ssl_verify_peer' => true,
+    ],
 ```
 
 ## Compatibility matrix
