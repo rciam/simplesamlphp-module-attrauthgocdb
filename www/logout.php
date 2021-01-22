@@ -6,12 +6,15 @@
  */
 
 if (!array_key_exists('StateId', $_GET)) {
-    throw new SimpleSAML_Error_BadRequest('Missing required StateId query parameter.');
+    throw new SimpleSAML\Error\BadRequest('Missing required StateId query parameter.');
 }
-$state = SimpleSAML_Auth_State::loadState($_GET['StateId'], 'attrauthgocdb:error_state');
+$state = SimpleSAML\Auth\State::loadState($_GET['StateId'], 'attrauthgocdb:error_state');
 
-$state['Responder'] = array('sspmod_attrauthgocdb_Logout', 'postLogout');
+$state['Responder'] = [
+    'sspmod_attrauthgocdb_Logout',
+    'postLogout'
+];
 
-$idp = SimpleSAML_IdP::getByState($state);
-$idp->handleLogoutRequest($state, NULL);
+$idp = SimpleSAML\IdP::getByState($state);
+$idp->handleLogoutRequest($state, null);
 assert('FALSE');
