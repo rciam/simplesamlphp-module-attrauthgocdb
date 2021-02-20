@@ -3,7 +3,7 @@
 namespace SimpleSAML\Module\attrauthgocdb\Auth\Process;
 
 use SimpleSAML\Auth\ProcessingFilter;
-use SimpleSAML\Auth_State;
+use SimpleSAML\Auth\State;
 use SimpleSAML\Configuration;
 use SimpleSAML\Error\Exception;
 use SimpleSAML\Logger;
@@ -131,7 +131,7 @@ class Client extends ProcessingFilter
             } else {
                 // Save state and redirect
                 $state['attrauthgocdb:error_msg'] = $e->getMessage();
-                $id = Auth_State::saveState($state, 'attrauthgocdb:error_state');
+                $id = State::saveState($state, 'attrauthgocdb:error_state');
                 $url = Module::getModuleURL('attrauthgocdb/user_in_form.php');
                 HTTP::redirectTrustedURL($url, ['StateId' => $id]);
                 //$this->showException($e);
