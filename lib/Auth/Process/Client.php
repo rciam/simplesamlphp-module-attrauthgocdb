@@ -11,6 +11,7 @@ use SimpleSAML\Module;
 use SimpleSAML\Utils\Config;
 use SimpleSAML\Utils\HTTP;
 use SimpleSAML\XHTML\Template;
+use SimpleXMLElement;
 
 /**
  * Authproc filter for retrieving attributes from the Grid Configuration
